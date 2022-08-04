@@ -1,36 +1,7 @@
-const user = require('../models/connection');
+const userModel = require('../models/userModel');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { generateCode, isValid, isValidEmail, isValidPhone, isValidPassword, isValidName } = require('../utils/utils');
-
-//SQL QUERIES
-const create = (sql, values) => new Promise((resolve, reject) => {
-    user.query(sql, [values], (error, results) => {
-        if (error) {
-            return reject(error);
-        }
-        return resolve(results);
-    });
-});
-
-const findOne = (sql, values) => new Promise((resolve, reject) => {
-    user.query(sql, [values], (error, results) => {
-        if (error) {
-            return reject(error);
-        }
-        return resolve(results);
-    });
-});
-
-const find = (sql, values) => new Promise((resolve, reject) => {
-    user.query(sql, values, (error, results) => {
-        if (error) {
-            return reject(error);
-        }
-        return resolve(results);
-    });
-});
-
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -56,7 +27,7 @@ const registerUser = async (req, res) => {
         // Checking E-mail for Uniqueness
         const checkEmailQuery = "SELECT * FROM users WHERE email = ?";
 
-        const isEmailAlreadyPresent = await findOne(checkEmailQuery, email);
+        const isEmailAlreadyPresent = await userModel.findOne(checkEmailQuery, email);
         if (isEmailAlreadyPresent.length > 0) {
             return res.status(400).send({ status: false, message: "email already present!" });
         }
@@ -68,7 +39,7 @@ const registerUser = async (req, res) => {
         // Checking phone number for uniqueness
         const checkMobileQuery = "SELECT * FROM users WHERE mobile = ?";
 
-        const isMobileAlreadyPresent = await findOne(checkMobileQuery, mobile);
+        const isMobileAlreadyPresent = await userModel.findOne(checkMobileQuery, mobile);
         if (isMobileAlreadyPresent.length > 0) {
             return res.status(400).send({ status: false, message: "Phone number already present!" });
         }
@@ -98,7 +69,7 @@ const registerUser = async (req, res) => {
         const sql = 'INSERT INTO users(uid,first_name, last_name, email, mobile ,password, role, status) VALUES ?'
         const values = [[uid, first_name, last_name, email, mobile, password, role, status]];
 
-        const result = await create(sql, values);
+        const result = await userModel.create(sql, values);
         res.status(200).send({ status: true, message: "Account successfully created", data: result });
 
 
@@ -128,7 +99,7 @@ const loginUser = async (req, res) => {
         // Find user details from DB
         const findEmailQuery = "SELECT * FROM users WHERE email = ?";
 
-        const user = await findOne(findEmailQuery, email);
+        const user = await userModel.findOne(findEmailQuery, email);
 
         // Checking User exists or not
         if (user.length === 0) {
@@ -169,7 +140,7 @@ const getUserByToken = async (req, res) => {
         // Find user details from DB
         const findUserIdQueruy = "SELECT * FROM users WHERE uid = ?";
 
-        const user = await findOne(findUserIdQueruy, uid);
+        const user = await userModel.findOne(findUserIdQueruy, uid);
 
         // Checking User exists or not
         if (user.length === 0) {
@@ -203,7 +174,7 @@ const getUsersByFilter = async (req, res) => {
 
         const filter = [name, email, mobile, status, role];
 
-        const user = await find(findUsersFilterQueruy, filter);
+        const user = await userModel.find(findUsersFilterQueruy, filter);
 
         // Checking User exists or not
         if (user.length === 0) {
